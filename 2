@@ -1,0 +1,1339 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "# Práctica 2. Minería de datos"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Importación de archivos\n",
+    "\n",
+    "En esta sección importaremos los archivos con los que trabajaremos, todos guaradados en extensión .txt para mayor facilidad de trabajo. En estos txt tenemos los tweets con los que realizaremos el análisis."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 70,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "El #ConsejoUniversitarioUNAM aprueba la creaciÃ³n de la licenciatura nÃºm. 129,\n",
+      "en IngenierÃ­a Aeroespacial. Â¡#GOYA!\n",
+      "\n",
+      "Barack Obama y su opiniÃ³n sobre el efecto del fallecido Nelson Mandela en la participaciÃ³n\n",
+      "ciudadana: Treinta aÃ±os despuÃ©s, recuerdo la esperanza que todos sentimos al ver la liberaciÃ³n de Mandela de la prisiÃ³n.\n",
+      "El regalo de una nueva forma de ver. La oportunidad de participar en el trabajo de construir un mejor\n",
+      "mundo. El Ãºltimo ejemplo de perseverancia y fe para cada nueva generaciÃ³n a seguir.\n",
+      "\n",
+      "Melissa Lilian sobre el presente que viven las mujeres en MÃ©xico: QuÃ© hazaÃ±a ser mujer y VIVIR en Mexico.\n",
+      "\n",
+      "Netflix y sus pelÃ­culas nominadas al Oscar: Seguimos con mood de OscarÂ®. AquÃ­ un combo de ganadoras que puedes ver en Netflix:\n",
+      "Roma\n",
+      "Birdman\n",
+      "Luz de luna\n",
+      "Revenant: El renacido\n",
+      "La sociedad de los poetas muertos\n",
+      "Red social\n",
+      "La teorÃ­a del todo\n",
+      "Manchester junto al mar\n",
+      "DÃ­a de entrenamiento\n",
+      "Gravedad\n",
+      "Frida\n",
+      "\n",
+      "Emilio Lozoya, ex director de PetrÃ³leos Mexicanos es seÃ±alado por la #FGR como autor\n",
+      "material de lavado de dinero con la constructora brasileÃ±a Odebrecht http://eluni.mx/wqblsvwhn\n"
+     ]
+    }
+   ],
+   "source": [
+    "#Importamos el primer archivo .txt, y sólo leeremos la información dentro de él, almacenamos el texto en una variable y lo \n",
+    "#imprimimos para verificar que la importación fue correcta (esto solo se hará con el primer archivo).\n",
+    "\n",
+    "archivo_01 = open('tweets_01.txt','r')\n",
+    "tweets_01 = archivo_01.read()\n",
+    "print(tweets_01)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 71,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "archivo_02 = open('tweets_02.txt','r')\n",
+    "tweets_02 = archivo_02.read()\n",
+    "\n",
+    "archivo_03 = open('tweets_03.txt','r')\n",
+    "tweets_03 = archivo_03.read()\n",
+    "\n",
+    "archivo_04 = open('tweets_04.txt','r')\n",
+    "tweets_04 = archivo_04.read()\n",
+    "\n",
+    "archivo_05 = open('tweets_05.txt','r')\n",
+    "tweets_05 = archivo_05.read()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Ahora importaremos la librería 'nltk' que sirve para procesar el lenguaje natural simbólico."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 72,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import nltk"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Ahora descargamos una lista de palabras vacías que no nos dan información como los pronombres, preposiciones, etc."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 73,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "[nltk_data] Downloading package stopwords to\n",
+      "[nltk_data]     C:\\Users\\Arreguin\\AppData\\Roaming\\nltk_data...\n",
+      "[nltk_data]   Package stopwords is already up-to-date!\n"
+     ]
+    },
+    {
+     "data": {
+      "text/plain": [
+       "True"
+      ]
+     },
+     "execution_count": 73,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "nltk.download('stopwords')"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Descargamos más librerías que nos ayudaran a lo largo de la práctica."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 74,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from nltk.corpus import stopwords\n",
+    "from nltk.tokenize import word_tokenize \n",
+    "from nltk.tokenize import RegexpTokenizer\n",
+    "import numpy as np    \n",
+    "from numpy import dot\n",
+    "from numpy.linalg import norm"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Descargamos el idioma en el que están nuestros tweets para eliminar las 'stopwords' de ellos."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 75,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "{'a',\n",
+       " 'al',\n",
+       " 'algo',\n",
+       " 'algunas',\n",
+       " 'algunos',\n",
+       " 'ante',\n",
+       " 'antes',\n",
+       " 'como',\n",
+       " 'con',\n",
+       " 'contra',\n",
+       " 'cual',\n",
+       " 'cuando',\n",
+       " 'de',\n",
+       " 'del',\n",
+       " 'desde',\n",
+       " 'donde',\n",
+       " 'durante',\n",
+       " 'e',\n",
+       " 'el',\n",
+       " 'ella',\n",
+       " 'ellas',\n",
+       " 'ellos',\n",
+       " 'en',\n",
+       " 'entre',\n",
+       " 'era',\n",
+       " 'erais',\n",
+       " 'eran',\n",
+       " 'eras',\n",
+       " 'eres',\n",
+       " 'es',\n",
+       " 'esa',\n",
+       " 'esas',\n",
+       " 'ese',\n",
+       " 'eso',\n",
+       " 'esos',\n",
+       " 'esta',\n",
+       " 'estaba',\n",
+       " 'estabais',\n",
+       " 'estaban',\n",
+       " 'estabas',\n",
+       " 'estad',\n",
+       " 'estada',\n",
+       " 'estadas',\n",
+       " 'estado',\n",
+       " 'estados',\n",
+       " 'estamos',\n",
+       " 'estando',\n",
+       " 'estar',\n",
+       " 'estaremos',\n",
+       " 'estará',\n",
+       " 'estarán',\n",
+       " 'estarás',\n",
+       " 'estaré',\n",
+       " 'estaréis',\n",
+       " 'estaría',\n",
+       " 'estaríais',\n",
+       " 'estaríamos',\n",
+       " 'estarían',\n",
+       " 'estarías',\n",
+       " 'estas',\n",
+       " 'este',\n",
+       " 'estemos',\n",
+       " 'esto',\n",
+       " 'estos',\n",
+       " 'estoy',\n",
+       " 'estuve',\n",
+       " 'estuviera',\n",
+       " 'estuvierais',\n",
+       " 'estuvieran',\n",
+       " 'estuvieras',\n",
+       " 'estuvieron',\n",
+       " 'estuviese',\n",
+       " 'estuvieseis',\n",
+       " 'estuviesen',\n",
+       " 'estuvieses',\n",
+       " 'estuvimos',\n",
+       " 'estuviste',\n",
+       " 'estuvisteis',\n",
+       " 'estuviéramos',\n",
+       " 'estuviésemos',\n",
+       " 'estuvo',\n",
+       " 'está',\n",
+       " 'estábamos',\n",
+       " 'estáis',\n",
+       " 'están',\n",
+       " 'estás',\n",
+       " 'esté',\n",
+       " 'estéis',\n",
+       " 'estén',\n",
+       " 'estés',\n",
+       " 'fue',\n",
+       " 'fuera',\n",
+       " 'fuerais',\n",
+       " 'fueran',\n",
+       " 'fueras',\n",
+       " 'fueron',\n",
+       " 'fuese',\n",
+       " 'fueseis',\n",
+       " 'fuesen',\n",
+       " 'fueses',\n",
+       " 'fui',\n",
+       " 'fuimos',\n",
+       " 'fuiste',\n",
+       " 'fuisteis',\n",
+       " 'fuéramos',\n",
+       " 'fuésemos',\n",
+       " 'ha',\n",
+       " 'habida',\n",
+       " 'habidas',\n",
+       " 'habido',\n",
+       " 'habidos',\n",
+       " 'habiendo',\n",
+       " 'habremos',\n",
+       " 'habrá',\n",
+       " 'habrán',\n",
+       " 'habrás',\n",
+       " 'habré',\n",
+       " 'habréis',\n",
+       " 'habría',\n",
+       " 'habríais',\n",
+       " 'habríamos',\n",
+       " 'habrían',\n",
+       " 'habrías',\n",
+       " 'habéis',\n",
+       " 'había',\n",
+       " 'habíais',\n",
+       " 'habíamos',\n",
+       " 'habían',\n",
+       " 'habías',\n",
+       " 'han',\n",
+       " 'has',\n",
+       " 'hasta',\n",
+       " 'hay',\n",
+       " 'haya',\n",
+       " 'hayamos',\n",
+       " 'hayan',\n",
+       " 'hayas',\n",
+       " 'hayáis',\n",
+       " 'he',\n",
+       " 'hemos',\n",
+       " 'hube',\n",
+       " 'hubiera',\n",
+       " 'hubierais',\n",
+       " 'hubieran',\n",
+       " 'hubieras',\n",
+       " 'hubieron',\n",
+       " 'hubiese',\n",
+       " 'hubieseis',\n",
+       " 'hubiesen',\n",
+       " 'hubieses',\n",
+       " 'hubimos',\n",
+       " 'hubiste',\n",
+       " 'hubisteis',\n",
+       " 'hubiéramos',\n",
+       " 'hubiésemos',\n",
+       " 'hubo',\n",
+       " 'la',\n",
+       " 'las',\n",
+       " 'le',\n",
+       " 'les',\n",
+       " 'lo',\n",
+       " 'los',\n",
+       " 'me',\n",
+       " 'mi',\n",
+       " 'mis',\n",
+       " 'mucho',\n",
+       " 'muchos',\n",
+       " 'muy',\n",
+       " 'más',\n",
+       " 'mí',\n",
+       " 'mía',\n",
+       " 'mías',\n",
+       " 'mío',\n",
+       " 'míos',\n",
+       " 'nada',\n",
+       " 'ni',\n",
+       " 'no',\n",
+       " 'nos',\n",
+       " 'nosotras',\n",
+       " 'nosotros',\n",
+       " 'nuestra',\n",
+       " 'nuestras',\n",
+       " 'nuestro',\n",
+       " 'nuestros',\n",
+       " 'o',\n",
+       " 'os',\n",
+       " 'otra',\n",
+       " 'otras',\n",
+       " 'otro',\n",
+       " 'otros',\n",
+       " 'para',\n",
+       " 'pero',\n",
+       " 'poco',\n",
+       " 'por',\n",
+       " 'porque',\n",
+       " 'que',\n",
+       " 'quien',\n",
+       " 'quienes',\n",
+       " 'qué',\n",
+       " 'se',\n",
+       " 'sea',\n",
+       " 'seamos',\n",
+       " 'sean',\n",
+       " 'seas',\n",
+       " 'sentid',\n",
+       " 'sentida',\n",
+       " 'sentidas',\n",
+       " 'sentido',\n",
+       " 'sentidos',\n",
+       " 'seremos',\n",
+       " 'será',\n",
+       " 'serán',\n",
+       " 'serás',\n",
+       " 'seré',\n",
+       " 'seréis',\n",
+       " 'sería',\n",
+       " 'seríais',\n",
+       " 'seríamos',\n",
+       " 'serían',\n",
+       " 'serías',\n",
+       " 'seáis',\n",
+       " 'siente',\n",
+       " 'sin',\n",
+       " 'sintiendo',\n",
+       " 'sobre',\n",
+       " 'sois',\n",
+       " 'somos',\n",
+       " 'son',\n",
+       " 'soy',\n",
+       " 'su',\n",
+       " 'sus',\n",
+       " 'suya',\n",
+       " 'suyas',\n",
+       " 'suyo',\n",
+       " 'suyos',\n",
+       " 'sí',\n",
+       " 'también',\n",
+       " 'tanto',\n",
+       " 'te',\n",
+       " 'tendremos',\n",
+       " 'tendrá',\n",
+       " 'tendrán',\n",
+       " 'tendrás',\n",
+       " 'tendré',\n",
+       " 'tendréis',\n",
+       " 'tendría',\n",
+       " 'tendríais',\n",
+       " 'tendríamos',\n",
+       " 'tendrían',\n",
+       " 'tendrías',\n",
+       " 'tened',\n",
+       " 'tenemos',\n",
+       " 'tenga',\n",
+       " 'tengamos',\n",
+       " 'tengan',\n",
+       " 'tengas',\n",
+       " 'tengo',\n",
+       " 'tengáis',\n",
+       " 'tenida',\n",
+       " 'tenidas',\n",
+       " 'tenido',\n",
+       " 'tenidos',\n",
+       " 'teniendo',\n",
+       " 'tenéis',\n",
+       " 'tenía',\n",
+       " 'teníais',\n",
+       " 'teníamos',\n",
+       " 'tenían',\n",
+       " 'tenías',\n",
+       " 'ti',\n",
+       " 'tiene',\n",
+       " 'tienen',\n",
+       " 'tienes',\n",
+       " 'todo',\n",
+       " 'todos',\n",
+       " 'tu',\n",
+       " 'tus',\n",
+       " 'tuve',\n",
+       " 'tuviera',\n",
+       " 'tuvierais',\n",
+       " 'tuvieran',\n",
+       " 'tuvieras',\n",
+       " 'tuvieron',\n",
+       " 'tuviese',\n",
+       " 'tuvieseis',\n",
+       " 'tuviesen',\n",
+       " 'tuvieses',\n",
+       " 'tuvimos',\n",
+       " 'tuviste',\n",
+       " 'tuvisteis',\n",
+       " 'tuviéramos',\n",
+       " 'tuviésemos',\n",
+       " 'tuvo',\n",
+       " 'tuya',\n",
+       " 'tuyas',\n",
+       " 'tuyo',\n",
+       " 'tuyos',\n",
+       " 'tú',\n",
+       " 'un',\n",
+       " 'una',\n",
+       " 'uno',\n",
+       " 'unos',\n",
+       " 'vosotras',\n",
+       " 'vosotros',\n",
+       " 'vuestra',\n",
+       " 'vuestras',\n",
+       " 'vuestro',\n",
+       " 'vuestros',\n",
+       " 'y',\n",
+       " 'ya',\n",
+       " 'yo',\n",
+       " 'él',\n",
+       " 'éramos'}"
+      ]
+     },
+     "execution_count": 75,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#Descargamos los idiomas\n",
+    "stopwords.fileids()\n",
+    "#Establecemos las 'stopwords' en el idioma prefrible o que vayamos a trabajar\n",
+    "set(stopwords.words('spanish'))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Creamos un tokenizador para dividir las cadenas de texto usando la expresión regular '\\w+' la cual sirve para eliminar carácteres especiales como el 'underscore' y signos de puntiación."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 76,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "tokenizer = RegexpTokenizer('\\w+')"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Tokenización\n",
+    "\n",
+    "En esta parte realizaremos la tokenización para eliminar signos de puntuación, carácteres alfanúmericos, etc. para limpiar los textos."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 77,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "['consejouniversitariounam', 'aprueba', 'creaciã³n', 'licenciatura', 'nãºm', '129', 'ingenierã', 'aeroespacial', 'â', 'goya', 'barack', 'obama', 'opiniã³n', 'efecto', 'fallecido', 'nelson', 'mandela', 'participaciã³n', 'ciudadana', 'treinta', 'aã', 'despuã', 's', 'recuerdo', 'esperanza', 'sentimos', 'ver', 'liberaciã³n', 'mandela', 'prisiã³n', 'regalo', 'nueva', 'forma', 'ver', 'oportunidad', 'participar', 'trabajo', 'construir', 'mejor', 'mundo', 'ãºltimo', 'ejemplo', 'perseverancia', 'fe', 'cada', 'nueva', 'generaciã³n', 'seguir', 'melissa', 'lilian', 'presente', 'viven', 'mujeres', 'mã', 'xico', 'quã', 'hazaã', 'ser', 'mujer', 'vivir', 'mexico', 'netflix', 'pelã', 'culas', 'nominadas', 'oscar', 'seguimos', 'mood', 'oscarâ', 'aquã', 'combo', 'ganadoras', 'puedes', 'ver', 'netflix', 'roma', 'birdman', 'luz', 'luna', 'revenant', 'renacido', 'sociedad', 'poetas', 'muertos', 'red', 'social', 'teorã', 'manchester', 'junto', 'mar', 'dã', 'entrenamiento', 'gravedad', 'frida', 'emilio', 'lozoya', 'ex', 'director', 'petrã³leos', 'mexicanos', 'seã', 'alado', 'fgr', 'autor', 'material', 'lavado', 'dinero', 'constructora', 'brasileã', 'odebrecht', 'http', 'eluni', 'mx', 'wqblsvwhn']\n"
+     ]
+    }
+   ],
+   "source": [
+    "#Tokenización 1\n",
+    "\n",
+    "tweets_token_01 = tokenizer.tokenize(tweets_01.lower())\n",
+    "tweets_sin_stopwords_01 = []\n",
+    "\n",
+    "for palabra in tweets_token_01:\n",
+    "    if palabra not in stopwords.words('spanish'):\n",
+    "        tweets_sin_stopwords_01.append(palabra)\n",
+    "\n",
+    "#Imprimimos los resultados para mostrar cómo se guardan las palabras y número en una lista, esta no contiene signos de \n",
+    "#puntuación o caracteres especiales.\n",
+    "print(tweets_sin_stopwords_01)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 78,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "#Tokenización 2\n",
+    "\n",
+    "tweets_token_02 = tokenizer.tokenize(tweets_02.lower())\n",
+    "tweets_sin_stopwords_02 = []\n",
+    "\n",
+    "for palabra in tweets_token_02:\n",
+    "    if palabra not in stopwords.words('spanish'):\n",
+    "        tweets_sin_stopwords_02.append(palabra)\n",
+    "\n",
+    "        \n",
+    "#Tokenización 3\n",
+    "\n",
+    "tweets_token_03 = tokenizer.tokenize(tweets_03.lower())\n",
+    "tweets_sin_stopwords_03 = []\n",
+    "\n",
+    "for palabra in tweets_token_03:\n",
+    "    if palabra not in stopwords.words('spanish'):\n",
+    "        tweets_sin_stopwords_03.append(palabra)\n",
+    "        \n",
+    "#Tokenización 4\n",
+    "\n",
+    "tweets_token_04 = tokenizer.tokenize(tweets_04.lower())\n",
+    "tweets_sin_stopwords_04 = []\n",
+    "\n",
+    "for palabra in tweets_token_04:\n",
+    "    if palabra not in stopwords.words('spanish'):\n",
+    "        tweets_sin_stopwords_04.append(palabra)\n",
+    "        \n",
+    "#Tokenización 5\n",
+    "\n",
+    "tweets_token_05 = tokenizer.tokenize(tweets_05.lower())\n",
+    "tweets_sin_stopwords_05 = []\n",
+    "\n",
+    "for palabra in tweets_token_05:\n",
+    "    if palabra not in stopwords.words('spanish'):\n",
+    "        tweets_sin_stopwords_05.append(palabra)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Creación de la BoW\n",
+    "\n",
+    "La Bag of Words es un método para extraer características de los documentos de texto. Estas características pueden usarse para la creación de algoritmos de Machine Learning."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 98,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "349\n"
+     ]
+    },
+    {
+     "data": {
+      "text/plain": [
+       "{'consejouniversitariounam': 1,\n",
+       " 'aprueba': 1,\n",
+       " 'creaciã³n': 1,\n",
+       " 'licenciatura': 1,\n",
+       " 'nãºm': 1,\n",
+       " '129': 1,\n",
+       " 'ingenierã': 1,\n",
+       " 'aeroespacial': 1,\n",
+       " 'â': 5,\n",
+       " 'goya': 1,\n",
+       " 'barack': 1,\n",
+       " 'obama': 1,\n",
+       " 'opiniã³n': 1,\n",
+       " 'efecto': 1,\n",
+       " 'fallecido': 1,\n",
+       " 'nelson': 1,\n",
+       " 'mandela': 2,\n",
+       " 'participaciã³n': 1,\n",
+       " 'ciudadana': 1,\n",
+       " 'treinta': 1,\n",
+       " 'aã': 3,\n",
+       " 'despuã': 2,\n",
+       " 's': 4,\n",
+       " 'recuerdo': 1,\n",
+       " 'esperanza': 2,\n",
+       " 'sentimos': 1,\n",
+       " 'ver': 3,\n",
+       " 'liberaciã³n': 1,\n",
+       " 'prisiã³n': 1,\n",
+       " 'regalo': 1,\n",
+       " 'nueva': 3,\n",
+       " 'forma': 1,\n",
+       " 'oportunidad': 1,\n",
+       " 'participar': 2,\n",
+       " 'trabajo': 1,\n",
+       " 'construir': 1,\n",
+       " 'mejor': 1,\n",
+       " 'mundo': 2,\n",
+       " 'ãºltimo': 1,\n",
+       " 'ejemplo': 1,\n",
+       " 'perseverancia': 1,\n",
+       " 'fe': 1,\n",
+       " 'cada': 1,\n",
+       " 'generaciã³n': 2,\n",
+       " 'seguir': 1,\n",
+       " 'melissa': 1,\n",
+       " 'lilian': 1,\n",
+       " 'presente': 1,\n",
+       " 'viven': 1,\n",
+       " 'mujeres': 1,\n",
+       " 'mã': 3,\n",
+       " 'xico': 1,\n",
+       " 'quã': 1,\n",
+       " 'hazaã': 1,\n",
+       " 'ser': 2,\n",
+       " 'mujer': 2,\n",
+       " 'vivir': 1,\n",
+       " 'mexico': 1,\n",
+       " 'netflix': 2,\n",
+       " 'pelã': 1,\n",
+       " 'culas': 1,\n",
+       " 'nominadas': 1,\n",
+       " 'oscar': 1,\n",
+       " 'seguimos': 1,\n",
+       " 'mood': 1,\n",
+       " 'oscarâ': 1,\n",
+       " 'aquã': 1,\n",
+       " 'combo': 1,\n",
+       " 'ganadoras': 1,\n",
+       " 'puedes': 1,\n",
+       " 'roma': 1,\n",
+       " 'birdman': 1,\n",
+       " 'luz': 1,\n",
+       " 'luna': 2,\n",
+       " 'revenant': 1,\n",
+       " 'renacido': 1,\n",
+       " 'sociedad': 1,\n",
+       " 'poetas': 1,\n",
+       " 'muertos': 1,\n",
+       " 'red': 1,\n",
+       " 'social': 1,\n",
+       " 'teorã': 1,\n",
+       " 'manchester': 1,\n",
+       " 'junto': 1,\n",
+       " 'mar': 1,\n",
+       " 'dã': 1,\n",
+       " 'entrenamiento': 1,\n",
+       " 'gravedad': 1,\n",
+       " 'frida': 1,\n",
+       " 'emilio': 1,\n",
+       " 'lozoya': 1,\n",
+       " 'ex': 1,\n",
+       " 'director': 1,\n",
+       " 'petrã³leos': 1,\n",
+       " 'mexicanos': 1,\n",
+       " 'seã': 1,\n",
+       " 'alado': 1,\n",
+       " 'fgr': 1,\n",
+       " 'autor': 1,\n",
+       " 'material': 1,\n",
+       " 'lavado': 1,\n",
+       " 'dinero': 1,\n",
+       " 'constructora': 1,\n",
+       " 'brasileã': 1,\n",
+       " 'odebrecht': 1,\n",
+       " 'http': 1,\n",
+       " 'eluni': 1,\n",
+       " 'mx': 1,\n",
+       " 'wqblsvwhn': 1,\n",
+       " '1': 1,\n",
+       " 'world': 3,\n",
+       " 'health': 1,\n",
+       " 'organization': 1,\n",
+       " 'who': 2,\n",
+       " '7h': 1,\n",
+       " 'nãºmero': 1,\n",
+       " 'paã': 1,\n",
+       " 'ses': 1,\n",
+       " 'reportando': 1,\n",
+       " 'nuevos': 2,\n",
+       " 'casos': 2,\n",
+       " 'covid19': 1,\n",
+       " 'cambiado': 1,\n",
+       " '4': 3,\n",
+       " 'febrero': 2,\n",
+       " '48': 1,\n",
+       " 'confirmados': 1,\n",
+       " 'afuera': 1,\n",
+       " 'china': 1,\n",
+       " 'martes': 1,\n",
+       " '40': 2,\n",
+       " 'gente': 2,\n",
+       " 'bordo': 2,\n",
+       " 'crucero': 3,\n",
+       " 'diamondprincess': 1,\n",
+       " 'encuentra': 1,\n",
+       " 'cuarentena': 2,\n",
+       " 'yokohama': 1,\n",
+       " 'ðÿ': 2,\n",
+       " 'µ': 1,\n",
+       " 'drtedros': 1,\n",
+       " '2': 3,\n",
+       " 'universal': 2,\n",
+       " 'el_universal_mx': 2,\n",
+       " 'maã': 1,\n",
+       " 'ana': 1,\n",
+       " 'cuatro': 1,\n",
+       " '45': 1,\n",
+       " 'polã': 1,\n",
+       " 'ticos': 1,\n",
+       " 'asesinados': 1,\n",
+       " 'guerrero': 1,\n",
+       " 'daniel': 1,\n",
+       " 'esteban': 1,\n",
+       " 'gonzã': 1,\n",
+       " 'lez': 1,\n",
+       " 'desaparecieron': 1,\n",
+       " 'mes': 1,\n",
+       " 'tomar': 1,\n",
+       " 'protesta': 1,\n",
+       " 'cuerpo': 1,\n",
+       " 'hallado': 1,\n",
+       " '3': 2,\n",
+       " 'univision': 1,\n",
+       " 'noticias': 2,\n",
+       " 'uninoticias': 1,\n",
+       " '4h': 1,\n",
+       " 'menos': 2,\n",
+       " '174': 1,\n",
+       " 'personas': 2,\n",
+       " 'infectadas': 1,\n",
+       " 'coronavirus': 5,\n",
+       " 'aguas': 1,\n",
+       " 'japã³n': 1,\n",
+       " 'ayer': 1,\n",
+       " 'litro': 1,\n",
+       " 'magna': 1,\n",
+       " 'vende': 1,\n",
+       " 'caro': 1,\n",
+       " 'cdmx': 1,\n",
+       " 'supera': 1,\n",
+       " 'peso': 1,\n",
+       " 'promedio': 1,\n",
+       " 'nacional': 1,\n",
+       " '5': 2,\n",
+       " 'efe': 2,\n",
+       " 'efenoticias': 1,\n",
+       " '9': 1,\n",
+       " 'feb': 1,\n",
+       " 'debido': 1,\n",
+       " 'brote': 1,\n",
+       " 'continuas': 1,\n",
+       " 'preocupaciones': 1,\n",
+       " 'torno': 1,\n",
+       " 'nuevo': 1,\n",
+       " 'amazon': 2,\n",
+       " 'retirarã': 1,\n",
+       " 'exhibir': 1,\n",
+       " 'mobile': 2,\n",
+       " 'congress': 2,\n",
+       " '2020': 1,\n",
+       " 'programado': 1,\n",
+       " '24': 1,\n",
+       " '27': 1,\n",
+       " 'barcelona': 1,\n",
+       " 'dijo': 1,\n",
+       " 'fuente': 1,\n",
+       " 'oficial': 1,\n",
+       " 'hace': 1,\n",
+       " '7': 1,\n",
+       " '300': 1,\n",
+       " 'años': 2,\n",
+       " 'hombres': 1,\n",
+       " 'entraron': 1,\n",
+       " 'cueva': 1,\n",
+       " 'alimentos': 1,\n",
+       " 'descubrieron': 1,\n",
+       " 'cuerpos': 1,\n",
+       " 'desmembrados': 1,\n",
+       " 'familiares': 2,\n",
+       " 'echaron': 1,\n",
+       " 'manos': 1,\n",
+       " 'cabeza': 2,\n",
+       " 'empezaron': 1,\n",
+       " 'llorar': 1,\n",
+       " 'asesinaron': 1,\n",
+       " 'quién': 1,\n",
+       " 'ahora': 1,\n",
+       " 'estudio': 1,\n",
+       " 'resuelto': 1,\n",
+       " 'caso': 1,\n",
+       " 'crítico': 1,\n",
+       " 'tras': 1,\n",
+       " 'haber': 1,\n",
+       " 'recibido': 1,\n",
+       " 'disparo': 2,\n",
+       " 'víctima': 2,\n",
+       " 'calle': 1,\n",
+       " 'persona': 1,\n",
+       " 'gorra': 1,\n",
+       " 'acercado': 1,\n",
+       " 'descerrajado': 1,\n",
+       " 'mapa': 1,\n",
+       " 'expansión': 1,\n",
+       " 'claves': 1,\n",
+       " 'entender': 1,\n",
+       " 'wuhan': 1,\n",
+       " 'cómo': 1,\n",
+       " 'transmite': 1,\n",
+       " 'cuál': 1,\n",
+       " 'población': 1,\n",
+       " 'vulnerable': 1,\n",
+       " 'dimensiones': 1,\n",
+       " 'contagio': 1,\n",
+       " 'pequeño': 1,\n",
+       " 'robot': 1,\n",
+       " 'exploración': 1,\n",
+       " 'chino': 2,\n",
+       " 'desvela': 1,\n",
+       " 'hoy': 1,\n",
+       " 'hecho': 1,\n",
+       " 'interior': 1,\n",
+       " 'cara': 1,\n",
+       " 'oculta': 1,\n",
+       " 'nivel': 1,\n",
+       " 'detalle': 1,\n",
+       " 'precedentes': 1,\n",
+       " 'permitido': 1,\n",
+       " 'reconstruir': 1,\n",
+       " 'pasado': 1,\n",
+       " 'satélite': 1,\n",
+       " 'histérica': 1,\n",
+       " 'temor': 1,\n",
+       " 'contagiado': 1,\n",
+       " 'exagera': 1,\n",
+       " 'mascarilla': 1,\n",
+       " 'pedía': 1,\n",
+       " 'familia': 1,\n",
+       " 'dice': 1,\n",
+       " 'shirley': 1,\n",
+       " 'mientras': 1,\n",
+       " 'muestra': 1,\n",
+       " 'careta': 1,\n",
+       " 'encoge': 1,\n",
+       " 'hombros': 1,\n",
+       " 'antartida': 1,\n",
+       " 'registra': 1,\n",
+       " 'record': 1,\n",
+       " 'historico': 1,\n",
+       " 'temperatura': 1,\n",
+       " 'base': 2,\n",
+       " 'tiroteo': 1,\n",
+       " 'tailandia': 1,\n",
+       " 'deja': 1,\n",
+       " '20': 2,\n",
+       " 'muertas': 1,\n",
+       " 'ericsson': 1,\n",
+       " 'participara': 1,\n",
+       " 'argentino': 1,\n",
+       " 'abordo': 1,\n",
+       " 'contrajo': 1,\n",
+       " 'jesusa': 1,\n",
+       " 'rodriguez': 1,\n",
+       " 'vã': 1,\n",
+       " 'deo': 1,\n",
+       " 'noticasfinance': 1,\n",
+       " 'informaciã³n': 1,\n",
+       " 'instantã': 1,\n",
+       " 'nea': 1,\n",
+       " 'precisa': 1,\n",
+       " 'inversores': 1,\n",
+       " 'lã': 1,\n",
+       " 'deres': 1,\n",
+       " 'financieros': 1,\n",
+       " 'suscrã': 1,\n",
+       " 'semanario': 1,\n",
+       " 'inversionbw': 1,\n",
+       " 'grupo': 1,\n",
+       " 'economiaed_': 1,\n",
+       " 'portadadeldia': 1,\n",
+       " 'madura': 1,\n",
+       " 'insta': 1,\n",
+       " 'formar': 1,\n",
+       " 'milicia': 1,\n",
+       " 'universitaria': 1,\n",
+       " 'ultimasnoticias': 3,\n",
+       " 'apunta': 1,\n",
+       " 'zafra': 1,\n",
+       " 'sensacional': 1,\n",
+       " '50': 2,\n",
+       " 'jonrones': 1,\n",
+       " 'bases': 1,\n",
+       " 'robadas': 1,\n",
+       " 'ronald': 1,\n",
+       " 'acuã': 1,\n",
+       " 'jr': 1,\n",
+       " 'quiere': 1,\n",
+       " 'alcanzar': 1,\n",
+       " 'marca': 1,\n",
+       " 'gobierno': 1,\n",
+       " 'anuncio': 1,\n",
+       " 'establecimiento': 1,\n",
+       " 'actividades': 1,\n",
+       " 'enero': 1,\n",
+       " 'venezuela': 1,\n",
+       " 'introduce': 1,\n",
+       " 'demanda': 1,\n",
+       " 'internacional': 1,\n",
+       " 'bloqueo': 1}"
+      ]
+     },
+     "execution_count": 98,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#Creamos un diccionario para asignar una clave a cada palabra de las listas creadas en la tokenización de los archivos.\n",
+    "\n",
+    "diccionario_tweets = {\"tweet_01\": tweets_sin_stopwords_01, \n",
+    "                      \"tweet_02\": tweets_sin_stopwords_02, \n",
+    "                      \"tweet_03\": tweets_sin_stopwords_03,\n",
+    "                      \"tweet_04\": tweets_sin_stopwords_04,\n",
+    "                      \"tweet_05\": tweets_sin_stopwords_05}\n",
+    "\n",
+    "#Creamos un diccionario que tendrá como claves todas las palabras de los textos tokenizados y le asignaremos como valor el \n",
+    "#número de palabras encontradas o repetidas en las 5 listas. \n",
+    "\n",
+    "diccionario_terminos = {}\n",
+    "\n",
+    "for text in diccionario_tweets:\n",
+    "    for word in diccionario_tweets[text]:      \n",
+    "        if(word in diccionario_terminos):\n",
+    "            diccionario_terminos[word] = diccionario_terminos[word] + 1\n",
+    "        elif(word not in diccionario_terminos):      \n",
+    "            diccionario_terminos[word] = 1        \n",
+    "\n",
+    "#Imprimimos el número de palabras encontradas en los 25 tweets tokenizados y después visualizamos el dicionario con claves \n",
+    "#y valores.\n",
+    "print(len(diccionario_terminos))\n",
+    "diccionario_terminos"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Matriz binaria (Matriz Término Documento)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 99,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "matriz_td = np.zeros((len(diccionario_terminos), len(diccionario_terminos)))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 100,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([[1., 1., 1., ..., 0., 0., 0.],\n",
+       "       [0., 0., 0., ..., 0., 0., 0.],\n",
+       "       [0., 0., 0., ..., 0., 0., 0.],\n",
+       "       ...,\n",
+       "       [0., 0., 0., ..., 0., 0., 0.],\n",
+       "       [0., 0., 0., ..., 0., 0., 0.],\n",
+       "       [0., 0., 0., ..., 0., 0., 0.]])"
+      ]
+     },
+     "execution_count": 100,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "i = 0\n",
+    "j = 0\n",
+    "\n",
+    "for palabra_terminos in diccionario_terminos: \n",
+    "    for palabra_tweets in diccionario_tweets: \n",
+    "        if(palabra_terminos in diccionario_tweets[palabra_tweets]):\n",
+    "            matriz_td[j, i] = 1\n",
+    "        elif(palabra_terminos not in diccionario_tweets[palabra_tweets]):\n",
+    "            matriz_td[j, i] = 0\n",
+    "            \n",
+    "        j = j + 1\n",
+    "        \n",
+    "    j = 0\n",
+    "    i = i + 1\n",
+    "    \n",
+    "matriz_td"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### Distancia Euclidiana"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 101,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "14.212670403551895"
+      ]
+     },
+     "execution_count": 101,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#Distancia euclidiana entre la lista 1 y lista 2\n",
+    "np.linalg.norm(matriz_td[0] - matriz_td[1])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 102,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "13.490737563232042"
+      ]
+     },
+     "execution_count": 102,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#Distancia euclidiana entre la lista 2 y lista 3\n",
+    "np.linalg.norm(matriz_td[1] - matriz_td[2])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 103,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "10.583005244258363"
+      ]
+     },
+     "execution_count": 103,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#Distancia euclidiana entre la lista 3 y lista 4\n",
+    "np.linalg.norm(matriz_td[2] - matriz_td[3])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 104,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "8.831760866327848"
+      ]
+     },
+     "execution_count": 104,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "#Distancia euclidiana entre la lista 4 y lista 5\n",
+    "np.linalg.norm(matriz_td[3] - matriz_td[4])"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 105,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "13.638181696985855\n",
+      "11.661903789690601\n",
+      "12.569805089976535\n"
+     ]
+    }
+   ],
+   "source": [
+    "#Distancia euclidiana entre la lista 1 y lista 3,4,5\n",
+    "print(np.linalg.norm(matriz_td[0] - matriz_td[2]))\n",
+    "print(np.linalg.norm(matriz_td[0] - matriz_td[3]))\n",
+    "print(np.linalg.norm(matriz_td[0] - matriz_td[4]))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 106,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "10.862780491200215\n",
+      "12.24744871391589\n"
+     ]
+    }
+   ],
+   "source": [
+    "#Distancia euclidiana entre la lista 2 y lista 4,5\n",
+    "print(np.linalg.norm(matriz_td[1] - matriz_td[3]))\n",
+    "print(np.linalg.norm(matriz_td[1] - matriz_td[4]))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 107,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "11.575836902790225\n"
+     ]
+    }
+   ],
+   "source": [
+    "#Distancia euclidiana entre la lista 3 y lista 5\n",
+    "print(np.linalg.norm(matriz_td[2] - matriz_td[4]))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "#### Similaridad Coseno\n",
+    "\n",
+    "La similaridad coseno  es una medida de similitud que se calcula entre dos vectores distintos de cero dentro del espacio interno del producto que mide el coseno del ángulo entre ellos."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 108,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "2.4494897427831783\n",
+      "2.0\n",
+      "1.0\n",
+      "1.414213562373095\n"
+     ]
+    }
+   ],
+   "source": [
+    "sim_tweet01_tweet02 = dot(matriz_td[0], matriz_td[1])/(norm(matriz_td[0]*matriz_td[1]))\n",
+    "sim_tweet01_tweet03 = dot(matriz_td[0], matriz_td[2])/(norm(matriz_td[0]*matriz_td[2]))\n",
+    "sim_tweet01_tweet04 = dot(matriz_td[0], matriz_td[3])/(norm(matriz_td[0]*matriz_td[3]))\n",
+    "sim_tweet01_tweet05 = dot(matriz_td[0], matriz_td[4])/(norm(matriz_td[0]*matriz_td[4]))\n",
+    "print(sim_tweet01_tweet02)\n",
+    "print(sim_tweet01_tweet03)\n",
+    "print(sim_tweet01_tweet04)\n",
+    "print(sim_tweet01_tweet05)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 109,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "2.0\n",
+      "2.82842712474619\n",
+      "2.0\n"
+     ]
+    }
+   ],
+   "source": [
+    "sim_tweet02_tweet03 = dot(matriz_td[1], matriz_td[2])/(norm(matriz_td[1]*matriz_td[2]))\n",
+    "sim_tweet02_tweet04 = dot(matriz_td[1], matriz_td[3])/(norm(matriz_td[1]*matriz_td[3]))\n",
+    "sim_tweet02_tweet05 = dot(matriz_td[1], matriz_td[4])/(norm(matriz_td[1]*matriz_td[4]))\n",
+    "print(sim_tweet02_tweet03)\n",
+    "print(sim_tweet02_tweet04)\n",
+    "print(sim_tweet02_tweet05)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 110,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "1.0\n",
+      "1.414213562373095\n"
+     ]
+    }
+   ],
+   "source": [
+    "sim_tweet03_tweet04 = dot(matriz_td[2], matriz_td[3])/(norm(matriz_td[2]*matriz_td[3]))\n",
+    "sim_tweet03_tweet05 = dot(matriz_td[2], matriz_td[4])/(norm(matriz_td[2]*matriz_td[4]))\n",
+    "print(sim_tweet03_tweet04)\n",
+    "print(sim_tweet03_tweet05)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 112,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "1.414213562373095\n"
+     ]
+    }
+   ],
+   "source": [
+    "sim_tweet04_tweet05 = dot(matriz_td[3], matriz_td[4])/(norm(matriz_td[3]*matriz_td[4]))\n",
+    "print(sim_tweet04_tweet05)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.7.3"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
